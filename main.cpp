@@ -3,6 +3,7 @@
 #include <string>
 #include "compressors.h"
 #include <iostream>
+#include <filesystem>
 using namespace std;
 
 byte getFileType(string path){
@@ -30,48 +31,62 @@ byte getFileType(string path){
     }
     //directory
     else{
+
         return (byte)4;
     }
 }
 
 int compressCore(vector<string>& paths, map<string, string>& conversionTypes, string& outputFolder){
-    for (string path: paths){
-        cout<<"full file path: "<<path<<endl;
-        byte fileType = getFileType(path);
-        cout<<"fileType: "<<(int)fileType<<endl;
-        switch (fileType){
-            case (byte)0:
-                compressText();
-                break;
+    for (string str_path: paths){
+        filesystem::path path(str_path);
 
-            case (byte)1:
-                compressImage();
-                break;
+        cout<<"\npath"<<path<<endl;
+        string extension = path.extension().string();
+        cout<<"file extension: "<<extension<<endl;
 
-            case (byte)2:
-                compressVideo();
-                break;
-
-            case (byte)3:
-                compressSound();
-                break;
-
-            default:
-                cout<<"Direcotory compression not implemented yet!"<<endl;
-                break;
+        if (!extension.compare(".txt")){
+            compressText();
         }
-        
+        //images
+        else if(!extension.compare(".jpg")){
+            compressImage();
+        }
+        //videos
+        else if(!extension.compare(".mp4")){
+            compressVideo();
+        }
+        //audio
+        else if(!extension.compare(".mp3")){
+            compressSound();
+        }
+        //directory
+        else{
+            //open dir, get all paths in there
+            //save as vector and pass recurently
+            vector<string> newPaths;
+            for (const auto& entry: filesystem::directory_iterator(path)){
+                newPaths.push_back(entry.path().string());
+            }
+            string newOutputFolder = outputFolder+'\\'+path.filename().string();
+            cout<<"new paths:"<<endl;
+            for (string e:newPaths){
+                cout<<"\t"<<e<<endl;
+            }
+            compressCore(newPaths, conversionTypes, newOutputFolder);
+        }
     }
 
-    return 0;
+    return 0; 
 }
+
+    
 
 int main() {
     cout << "Hello to SupaZippa!"<<endl;
 
     // Temp, for Petah to fill implement
-    vector<string> paths{"C:\\Users\\tomas\\Desktop\\SupaZippa\\someFile.txt", "someFile2.txt", "dirFolder"};
-    string output = "SupaZipped.zip";
+    vector<string> paths{"C:\\Users\\tomas\\Desktop\\SupaZippa\\someFile.txt", "someFile2.txt", "C:\\Users\\tomas\\Desktop\\SupaZippa\\dirFolder"};
+    string output = "SupaZipped";
     //file:method mapping
     map<string, string> conversionTypes;
     conversionTypes["Text"] = "Huffman";
